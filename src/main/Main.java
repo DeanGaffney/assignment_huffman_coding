@@ -1,38 +1,43 @@
 package main;
+import java.io.File;
+import java.io.FileNotFoundException;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.List;
+import java.util.Scanner;
 
 import models.Node;
 import utils.HuffmanCodingTree;
-import utils.TestString;
 
 public class Main {
 
-	public static void main(String[] args) {
+	public static void main(String[] args) throws FileNotFoundException {
+		String file = new Scanner(new File("data/test.txt")).useDelimiter("\\A").next(); //used to 
 		HuffmanCodingTree huffmanCodingTree = new HuffmanCodingTree();
-		TestString testString = new TestString("this is a test string");
-		char[] charArray = testString.getTestString().toCharArray();
+		//TestString testString = new TestString("this is a test string");
+		char[] charArray = file.toCharArray();
 		System.out.println(charArray);
 
 		//make single nodes first.
-		makeTrees(testString,charArray,huffmanCodingTree);
+		makeTrees(file,charArray,huffmanCodingTree);
 		for(int i = 0; i < huffmanCodingTree.getHuffmanCodingTree().size();i++)System.out.println(huffmanCodingTree.getHuffmanCodingTree().get(i).toString());
 		Collections.sort(huffmanCodingTree.getHuffmanCodingTree(),Collections.reverseOrder());
 		System.out.println();
 		for(int i = 0; i < huffmanCodingTree.getHuffmanCodingTree().size();i++)System.out.println(huffmanCodingTree.getHuffmanCodingTree().get(i).toString());
+		
+		//compression/coding
 		System.out.println("Compressing called....");
-		String compressed = huffmanCodingTree.compress(testString.getTestString());
+		//compresses file and adds EOF character if needed.
+		String compressed = huffmanCodingTree.compress(file);
 		System.out.println("Compression bit size:" + compressed.length());
 		System.out.println(compressed);
 		System.out.println();
-		System.out.println("Decompressing called....");
-		String decompressed = huffmanCodingTree.decompress(compressed);
-		System.out.println(decompressed);
+		
+		System.out.println("Remainder is:"+compressed.length()%8);
+		
 	}
-
+	
 	//searches for similar letters and makes a single tree out of the nodes.
-	private static void makeTrees(TestString testString,char[] charArray,HuffmanCodingTree huffmanCodingTree){
+	private static void makeTrees(String file,char[] charArray,HuffmanCodingTree huffmanCodingTree){
 		ArrayList<Character> letters = new ArrayList<Character>();
 		for(int i = 0; i < charArray.length;i++){
 			if(!letters.contains(charArray[i])){ // if it doesn't contain it its a new letter
@@ -51,6 +56,4 @@ public class Main {
 		}
 		return letterCount;
 	}
-
-
 }
