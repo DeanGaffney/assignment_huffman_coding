@@ -13,6 +13,7 @@ public class HuffmanCodingTree {
 	private PriorityQueue<Node> nodeQueue;
 	private HashMap<Character,String> characterToCode;
 	private HashMap<String,Character> codeToCharacter;
+	private int originalCompressionSize;
 
 	public HuffmanCodingTree(){
 		this.weight = 0;
@@ -44,7 +45,7 @@ public class HuffmanCodingTree {
 		root = new Node(createSingleTree());					// create single tree node or root note
 		System.out.println(nodeQueue.size());
 		createEncodings(root,new String());						//create encodings from the single tree.
-		String compressed;										
+		String compressed;		
 		compressed = (endOfFileCharactersNeeded(showCompression(file))) //add EOF if needed else return normal compression
 				? makeEndOfFileCharacter(showCompression(file)) : showCompression(file);
 		return compressed;
@@ -59,21 +60,30 @@ public class HuffmanCodingTree {
 		for(int i = 0;i < file.length();i++)compressed+=characterToCode.get(file.charAt(i));
 		return compressed;
 	}
+	
+	public int getOriginalBitSize(){
+		System.out.println("Original compression size is:"+originalCompressionSize);
+		return originalCompressionSize;
+	}
 
 	//method checks to see if the compressed bits are multiple of 8.
 	public boolean endOfFileCharactersNeeded(String compressed){
+		originalCompressionSize = compressed.length();
 		int charactersNeeded = compressed.length() % 8;
 		return (charactersNeeded == 0) ? false:true;
 	}
 
-	public void eofDebug(String compressed){
+	public void showOriginalBits(String compressed){
 		System.out.println("EOF was needed");
 		System.out.println("Compression size before EOF:" + compressed.length() + " bits");
 	}
 	
+	
+	
 	//makes EOF character if needed. (It will already have been checked by previous method).
 	public String makeEndOfFileCharacter(String compressed){
-		eofDebug(compressed); 							//just run some log messages
+		String originalCompresionFile = compressed;
+		showOriginalBits(originalCompresionFile);					//just run some log messages
 		int remainder = compressed.length() % 8;		//get remainder and see how many chars needed.
 		int charactersNeeded = 8 - remainder;
 		String eof = "";
@@ -85,19 +95,28 @@ public class HuffmanCodingTree {
 		}
 		//add to codeTOCharacter map
 		System.out.println("EOF ------>" + eof);
-		System.out.println("Compressed with EOF");
-		System.out.println(compressed);
 		codeToCharacter.put(eof, '#');					//make the EOF character be '#' and add it to map
 		return compressed;
 	}
-
-	public String decompress(String compressedFile){
-		String decompressed = new String();
-		//TO _DO
-		// traverse tree like using 0 LEFT / 1 RIGHT
-		// decode characters when you hit a node with a character.
-		//end decompression when EOF character is found.
-		return decompressed;
+	
+	/*
+	 * By storing the original compression size I can then stop reading the bits
+	 * after the original compression bit size has been met and can ignore the 
+	 * extra bits needed to make the file 8 bit chunks.
+	 */
+	public String decompress(String compressedFile,int originalCompressionSize){
+		String decompressed = "";							//result to return
+		String code = "";									//temporary string to get each code
+		
+		for(int i = 0; i < originalCompressionSize;i++){	//loop through codings
+			code+=compressedFile.charAt(i);					//create a code and check it against the hash map
+			if(codeToCharacter.get(code) != null && codeToCharacter.get(code) == '#')break;		//if it's the EOF character break the loop decompression done.
+			if(codeToCharacter.containsKey(code)){
+				decompressed+=codeToCharacter.get(code);	//if code found,retrieve character,reset code string for next code.
+				code = "";
+			}
+		}
+		return decompressed;								//return the decompressed string
 	}
 
 	//creates a single tree out of the "forests" nodes that I started with.
@@ -123,13 +142,14 @@ public class HuffmanCodingTree {
 		createEncodings(root.getLeft(),code+"0");
 		createEncodings(root.getRight(),code+"1");
 
-		if(root.getNodeCharacter() != 0){ //chars are checked with integers for null
+		if(root.getNodeCharacter() != 0){ //chars are checked with 0 for null
 			System.out.println("\'" + root.getNodeCharacter() + "\'" + " -----> " + code);
 			characterToCode.put(root.getNodeCharacter(), code);
 			codeToCharacter.put(code,root.getNodeCharacter());
 		}
 	}
 
+	//Compares Nodes for Priority Queue
 	class NodeComparator implements Comparator<Node>{
 		@Override
 		public int compare(Node node1, Node node2) {
